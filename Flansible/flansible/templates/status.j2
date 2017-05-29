@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block head %}
+  {% if refresh < 100 %}
+    <meta http-equiv="refresh" content="{{refresh}}">
+  {% endif %}
+{% block title %} {{ title }} {% endblock %}
+{% endblock %}
+
+
+{% block content %}
+	{{ status }}
+{% endblock %}

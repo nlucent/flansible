@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %} {{title}} {% endblock %}
+
+{% block content %}
+    <h3>{{curPB}}</h3>
+    <p>
+
+
+    <form action='/doit' class="form-inline" method="POST" name='PlaybookVars'>
+    	<h4>Required Playbook Variables</h4>
+	    {% for item in varlist %}
+	    	{{item}} <input type="text" class="form-control" placeholder="{{item}}" name="{{item}}" value="{{request.form[item]}}"><br>
+	    {% endfor %}
+
+	    <h4>Optional Runtime Variables</h4>
+	    Become <input type="checkbox" class="form-control" name="become" value="{{request.form['become']}}"><br>
+	    Inventory <input type="text" class="form-control" placeholder="Inventory file" name="inventory" value="{{request.form['inventory']}}"><br>
+	    <input type="hidden" name="playbook" value="{{curPB}}"/>
+	    <input class="btn btn-default" type="submit" value="Make it so">
+
+  </form>
+{% endblock %}

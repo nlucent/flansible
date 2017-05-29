@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% block head %}
+    <title>{% block title %}{% endblock %}</title>
+    {% endblock %}
+    <!-- Bootstrap -->
+    <link href={{ url_for('static', filename="css/bootstrap.min.css") }} rel="stylesheet">
+  	<link rel="shortcut icon" href="https://t-systems.com/blob/76448/681edf6b1bf49485eb41d31992f71a54/ts-de-en-favicon.ico"/>
+  </head>
+  <body>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+	<script src="js/bootstrap.min.js"></script>
+
+  {% block content %}
+  {% endblock %}
+
+  </body>
+</html>

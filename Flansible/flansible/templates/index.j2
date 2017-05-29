@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}{title}{% endblock %}
+
+{% block content %}
+
+<h4>Select playbook</h4>
+<p>
+<form action='/config' class="form-group" method='post' name='playbook'>
+  {% for item in varlist %}
+    <div class="radio">
+		<label><input type="radio" name="pbradio" value="{{item}}">{{item}}</input></label>
+		</div>
+	{% endfor %}
+	<input class="btn btn-default" type="submit" value="Next">
+</form>
+
+{% endblock %}

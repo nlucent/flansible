@@ -91,3 +91,4 @@ import flansible.ansible_task_output
 import flansible.ansible_task_status
 import flansible.git
 import flansible.list_playbooks
+import flansible.front_end

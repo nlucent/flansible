@@ -9,6 +9,67 @@ import celery_runner
 from flansible_git import FlansibleGit
 import json
 
+def runPlaybook(web, username, playbook_dir, playbook, inventory, extra_vars,  verbose_level, become):
+    curr_user = username
+
+    playbook_full_path = playbook_dir + "/" + playbook
+    playbook_full_path = playbook_full_path.replace("//", "/")
+
+    if not os.path.exists(playbook_dir):
+        if web:
+            resp = app.make_response((str.format("Directory not found: {0}", playbook_dir), 404))
+            return resp
+        else:
+            return str.format("Directory not found: {0}", playbook_dir)
+
+    if not os.path.isdir(playbook_dir):
+        if web:
+            resp = app.make_response((str.format("Not a directory: {0}", playbook_dir), 404))
+            return resp
+        else:
+            return str.format("Not a directory: {0}", playbook_dir)
+
+    if not os.path.exists(playbook_full_path):
+        if web:
+            resp = app.make_response((str.format("Playbook not found in folder. Path does not exist: {0}", playbook_full_path), 404))
+            return resp
+        else:
+            str.format("Playbook not found in folder. Path does not exist: {0}", playbook_full_path)
+
+    if not inventory:
+        inventory = ansible_default_inventory
+        has_inv_access = get_inventory_access(curr_user, inventory)
+        if not has_inv_access:
+            if web:
+                resp = app.make_response((str.format("User does not have access to inventory {0}", inventory), 403))
+                return resp
+            else:
+                return str.format("User does not have access to inventory {0}", inventory)
+    else:
+        if not os.path.exists(inventory):
+            if web:
+                resp = app.make_response((str.format("Inventory path not found: {0}", inventory), 404))
+                return resp
+            else:
+                return str.format("Inventory path not found: {0}", inventory)
+
+    inventory = str.format(" -i {0}", inventory)
+
+    if become:
+        become_string = ' --become'
+    else:
+        become_string = ''
+
+    extra_vars_string = ''
+    if extra_vars:
+        #extra_vars_string = str.format("  --extra-vars \'{0}\'", (json.dumps(extra_vars)))
+        extra_vars_string = " --extra-vars '%s'" % (json.dumps(extra_vars).replace("'", "'\\''"))
+
+    command = str.format("cd {0};ansible-playbook {1}{2}{3}{4}", playbook_dir, playbook, become_string, inventory, extra_vars_string)
+    task_result = celery_runner.do_long_running_task.apply_async([command], soft=task_timeout, hard=task_timeout)
+    result = {'task_id': task_result.id}
+    return result
+
 class RunAnsiblePlaybook(Resource):
     @swagger.operation(
         notes='Run Ansible Playbook',
@@ -58,59 +119,62 @@ class RunAnsiblePlaybook(Resource):
         extra_vars = args['extra_vars']
         do_update_git_repo = args['update_git_repo']
 
-        if do_update_git_repo is True:
-            result = FlansibleGit.update_git_repo(playbook_dir)
-            task = celery_runner.do_long_running_task.AsyncResult(result.id)
-            while task.state == "PENDING" or task.state == "PROGRESS":
-                #waiting for finish
-                task = celery_runner.do_long_running_task.AsyncResult(result.id)
-            if task.result['returncode'] != 0:
-                #git update failed
-                resp = app.make_response((str.format("Failed to update git repo: {0}",
-                                                     playbook_dir), 404))
-                return resp
-
         curr_user = auth.username()
+        return runPlaybook(True, curr_user, playbook_dir, playbook, inventory, extra_vars, 1, 1, become)
 
-        playbook_full_path = playbook_dir + "/" + playbook
-        playbook_full_path = playbook_full_path.replace("//", "/")
+        # if do_update_git_repo is True:
+        #     result = FlansibleGit.update_git_repo(playbook_dir)
+        #     task = celery_runner.do_long_running_task.AsyncResult(result.id)
+        #     while task.state == "PENDING" or task.state == "PROGRESS":
+        #         #waiting for finish
+        #         task = celery_runner.do_long_running_task.AsyncResult(result.id)
+        #     if task.result['returncode'] != 0:
+        #         #git update failed
+        #         resp = app.make_response((str.format("Failed to update git repo: {0}",
+        #                                              playbook_dir), 404))
+        #         return resp
 
-        if not os.path.exists(playbook_dir):
-            resp = app.make_response((str.format("Directory not found: {0}", playbook_dir), 404))
-            return resp
-        if not os.path.isdir(playbook_dir):
-            resp = app.make_response((str.format("Not a directory: {0}", playbook_dir), 404))
-            return resp
-        if not os.path.exists(playbook_full_path):
-            resp = app.make_response((str.format("Playbook not found in folder. Path does not exist: {0}", playbook_full_path), 404))
-            return resp
+        # curr_user = auth.username()
 
-        if not inventory:
-            inventory = ansible_default_inventory
-            has_inv_access = get_inventory_access(curr_user, inventory)
-            if not has_inv_access:
-                resp = app.make_response((str.format("User does not have access to inventory {0}", inventory), 403))
-                return resp
-        else:
-            if not os.path.exists(inventory):
-                resp = app.make_response((str.format("Inventory path not found: {0}", inventory), 404))
-                return resp
+        # playbook_full_path = playbook_dir + "/" + playbook
+        # playbook_full_path = playbook_full_path.replace("//", "/")
 
-        inventory = str.format(" -i {0}", inventory)
+        # if not os.path.exists(playbook_dir):
+        #     resp = app.make_response((str.format("Directory not found: {0}", playbook_dir), 404))
+        #     return resp
+        # if not os.path.isdir(playbook_dir):
+        #     resp = app.make_response((str.format("Not a directory: {0}", playbook_dir), 404))
+        #     return resp
+        # if not os.path.exists(playbook_full_path):
+        #     resp = app.make_response((str.format("Playbook not found in folder. Path does not exist: {0}", playbook_full_path), 404))
+        #     return resp
 
-        if become:
-            become_string = ' --become'
-        else:
-            become_string = ''
+        # if not inventory:
+        #     inventory = ansible_default_inventory
+        #     has_inv_access = get_inventory_access(curr_user, inventory)
+        #     if not has_inv_access:
+        #         resp = app.make_response((str.format("User does not have access to inventory {0}", inventory), 403))
+        #         return resp
+        # else:
+        #     if not os.path.exists(inventory):
+        #         resp = app.make_response((str.format("Inventory path not found: {0}", inventory), 404))
+        #         return resp
 
-        extra_vars_string = ''
-        if extra_vars:
-            #extra_vars_string = str.format("  --extra-vars \'{0}\'", (json.dumps(extra_vars)))
-            extra_vars_string = " --extra-vars '%s'" % (json.dumps(extra_vars).replace("'", "'\\''"))
+        # inventory = str.format(" -i {0}", inventory)
 
-        command = str.format("cd {0};ansible-playbook {1}{2}{3}{4}", playbook_dir, playbook, become_string, inventory, extra_vars_string)
-        task_result = celery_runner.do_long_running_task.apply_async([command], soft=task_timeout, hard=task_timeout)
-        result = {'task_id': task_result.id}
-        return result
+        # if become:
+        #     become_string = ' --become'
+        # else:
+        #     become_string = ''
+
+        # extra_vars_string = ''
+        # if extra_vars:
+        #     #extra_vars_string = str.format("  --extra-vars \'{0}\'", (json.dumps(extra_vars)))
+        #     extra_vars_string = " --extra-vars '%s'" % (json.dumps(extra_vars).replace("'", "'\\''"))
+
+        # command = str.format("cd {0};ansible-playbook {1}{2}{3}{4}", playbook_dir, playbook, become_string, inventory, extra_vars_string)
+        # task_result = celery_runner.do_long_running_task.apply_async([command], soft=task_timeout, hard=task_timeout)
+        # result = {'task_id': task_result.id}
+        # return result
 
 api.add_resource(RunAnsiblePlaybook, '/api/ansibleplaybook')
