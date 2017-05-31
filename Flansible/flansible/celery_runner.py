@@ -38,7 +38,7 @@ def do_long_running_task(self, cmd, type='Ansible'):
                     tname = p.group(1)
                     if rdis.get(tname):
                         line = line.replace('\n', '')
-                        line = str.format("{0} (Avg {1} secs)", line, rdis.get(tname))
+                        line = str.format("{0} (Avg {1} secs) \n", line, rdis.get(tname))
 
             if re.match('^[ok|changed|fatal]', line):
                 ended = time.time() - started
@@ -56,14 +56,14 @@ def do_long_running_task(self, cmd, type='Ansible'):
 
                 if ttime < ended:
                     diffsign = "+"
-                    diffval = ttime - ended
+                    diffval = float(ttime) - ended
 
                 elif ttime > ended:
                     diffsign = "-"
-                    diffval = ended - ttime
+                    diffval = ended - float(ttime)
                 
 
-                line = str.format("{0} : <strong>{1} seconds</strong>  (diff {3}{4} secs)\n", line, ended, diffsign, diffval)
+                line = str.format("{0} : <strong>{1} seconds</strong>  (diff {2}{3} secs)\n", line, ended, diffsign, diffval)
                 print(line)
             output = output + line
             self.update_state(state='PROGRESS', meta={'output': output, 'description': "", 'returncode': None})
