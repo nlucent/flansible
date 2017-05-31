@@ -1,10 +1,11 @@
 from flask_restful import Resource, Api
 from flask_restful_swagger import swagger
-from flask import render_template, make_response
+from flask import render_template, make_response, Response
 from flansible import app
 from flansible import api, app, celery, auth
 from ModelClasses import AnsibleCommandModel, AnsiblePlaybookModel, AnsibleRequestResultModel, AnsibleExtraArgsModel
 import celery_runner
+import time
 
 class AnsibleTaskOutput(Resource):
     @swagger.operation(
@@ -22,19 +23,32 @@ class AnsibleTaskOutput(Resource):
     ])
     @auth.login_required
     def get(self, task_id):
-        task = celery_runner.do_long_running_task.AsyncResult(task_id)
-        if task.state == 'PENDING':
-            result = "Task not found"
-            resp = app.make_response((result, 404))
-            return resp
-        if task.state == "PROGRESS":
-            result = task.info['output']
-        else:
-            result = task.info['output']
-        result = result.replace('\n', '<br>\n')
-
         title = "Playbook Results"
-        refresh = 5
+        task = celery_runner.do_long_running_task.AsyncResult(task_id)
+        count = 0
+        def inner():
+            while task.state != 'PENDING':
+                if len(task.info['output']) > 0:
+                    result = task.info['output'].pop(0)
+                    result = result.replace('\n', '<br>\n')
+                    time.sleep(1)
+                    yield result
+                yield ''
+                
+
+        return Response(inner(), mimetype='text/html')
+        # if task.state == 'PENDING':
+        #     result = "Task not found"
+        #     resp = app.make_response((result, 404))
+        #     return resp
+        # if task.state == "PROGRESS":
+        #     result = task.info['output']
+        # else:
+        #     result = task.info['output']
+        # result = result.replace('\n', '<br>\n')
+
+        
+        #refresh = 5
 
         if "RECAP" in result or "ERROR" in result:
             # disable refresh in template

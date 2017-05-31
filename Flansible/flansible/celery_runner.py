@@ -14,7 +14,7 @@ def do_long_running_task(self, cmd, type='Ansible'):
         
         has_error = False
         result = None
-        output = ""
+        output = []
         self.update_state(state='PROGRESS',
                           meta={'output': output, 
                                 'description': "",
@@ -29,9 +29,9 @@ def do_long_running_task(self, cmd, type='Ansible'):
         taskName = re.compile('TASK \[(\w+[\s+\w+]+)]')
 
         for line in iter(proc.stdout.readline, ''):
-            print(str(line))
+            #print(str(line))
             if re.match('^TASK', line):
-                started = time.time()
+                started = "{:0.2f}".format( time.time())
                 p = taskName.match(line)
                 if p:
                     # Check for previous runtime in rdis
@@ -41,13 +41,12 @@ def do_long_running_task(self, cmd, type='Ansible'):
                         line = str.format("{0} (Avg {1} secs) \n", line, rdis.get(tname))
 
             if re.match('^[ok|changed|fatal]', line):
-                ended = time.time() - started
-
+                ended = time.time() - float(started)
+                ended = "{:0.2f}".format(ended)
                 ttime = rdis.get(tname)
                 if not ttime:
                     ttime = ended
                     rdis.set(tname, ttime)
-
                 # remove last new line
                 line = line.replace('\n', '')
 
@@ -56,16 +55,17 @@ def do_long_running_task(self, cmd, type='Ansible'):
 
                 if ttime < ended:
                     diffsign = "+"
-                    diffval = float(ttime) - ended
+                    diffval = float(ttime) - float(ended)
 
                 elif ttime > ended:
                     diffsign = "-"
-                    diffval = ended - float(ttime)
+                    diffval = float(ended) - float(ttime)
                 
 
                 line = str.format("{0} : <strong>{1} seconds</strong>  (diff {2}{3} secs)\n", line, ended, diffsign, diffval)
-                print(line)
-            output = output + line
+               # print(line)
+            #output = output + line
+            output.append(line)
             self.update_state(state='PROGRESS', meta={'output': output, 'description': "", 'returncode': None})
 
         return_code = proc.poll()
