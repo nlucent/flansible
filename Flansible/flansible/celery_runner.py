@@ -14,7 +14,7 @@ def do_long_running_task(self, cmd, type='Ansible'):
         
         has_error = False
         result = None
-        output = []
+        output = ''
         self.update_state(state='PROGRESS',
                           meta={'output': output, 
                                 'description': "",
@@ -64,8 +64,8 @@ def do_long_running_task(self, cmd, type='Ansible'):
 
                 line = str.format("{0} : <strong>{1} seconds</strong>  (diff {2}{3} secs)\n", line, ended, diffsign, diffval)
                # print(line)
-            #output = output + line
-            output.append(line)
+            output = output + line
+            #output.append(line)
             self.update_state(state='PROGRESS', meta={'output': output, 'description': "", 'returncode': None})
 
         return_code = proc.poll()

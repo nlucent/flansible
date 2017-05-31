@@ -25,30 +25,17 @@ class AnsibleTaskOutput(Resource):
     def get(self, task_id):
         title = "Playbook Results"
         task = celery_runner.do_long_running_task.AsyncResult(task_id)
-        count = 0
-        def inner():
-            while task.state != 'PENDING':
-                if len(task.info['output']) > 0:
-                    result = task.info['output'].pop(0)
-                    result = result.replace('\n', '<br>\n')
-                    time.sleep(1)
-                    yield result
-                yield ''
-                
+        if task.state == 'PENDING':
+            result = "Task not found"
+            resp = app.make_response((result, 404))
+            return resp
+        if task.state == "PROGRESS":
+            result = task.info['output']
+        else:
+            result = task.info['output']
+        result = result.replace('\n', '<br>\n')
 
-        return Response(inner(), mimetype='text/html')
-        # if task.state == 'PENDING':
-        #     result = "Task not found"
-        #     resp = app.make_response((result, 404))
-        #     return resp
-        # if task.state == "PROGRESS":
-        #     result = task.info['output']
-        # else:
-        #     result = task.info['output']
-        # result = result.replace('\n', '<br>\n')
-
-        
-        #refresh = 5
+        refresh = 5
 
         if "RECAP" in result or "ERROR" in result:
             # disable refresh in template
