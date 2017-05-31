@@ -2,7 +2,8 @@ from celery import Celery
 import subprocess
 from subprocess import Popen, PIPE
 from flansible import api, app, celery, task_timeout
-
+import time
+import re
 
 
 @celery.task(bind=True, soft_time_limit=task_timeout, time_limit=(task_timeout+10))
@@ -18,8 +19,21 @@ def do_long_running_task(self, cmd, type='Ansible'):
                                 'returncode': None})
         print(str.format("About to execute: {0}", cmd))
         proc = Popen([cmd], stdout=PIPE, stderr=subprocess.STDOUT, shell=True)
+
+        started = 0
+        ended= 0
+
         for line in iter(proc.stdout.readline, ''):
             print(str(line))
+            if re.match('^TASK', line):
+                started = time.time()
+            if re.match('^[ok|changed|fatal]', line):
+                ended = time.time() - started
+                # remove last new line
+                line = line.replace('\n', '')
+                #output = output[:-1] + str.format(" # {0} seconds\n", ended)
+                line = str.format("{0} : {1} seconds \n", line, ended)
+
             output = output + line
             self.update_state(state='PROGRESS', meta={'output': output,'description': "",'returncode': None})
 

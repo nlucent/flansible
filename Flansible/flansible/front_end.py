@@ -72,9 +72,9 @@ def submitPlaybook():
     curr_user = auth.username()
     cmdres = runPlaybook(False, curr_user, pbmessage['playbook_dir'], pbmessage['playbook'], inventory, pbmessage['extra_vars'], 1, become)
     
-    if isinstance(cmdres, dict):
-        if 'task_id' in cmdres:
-            return redirect('/api/ansibletaskoutput/' + cmdres['task_id'])
+    if 'task_id' in cmdres:
+        return redirect('/api/ansibletaskoutput/' + cmdres['task_id'])
+            #return redirect('/status/' + cmdres['task_id'])
         
     return cmdres
     #     status = requests.get('/api/ansibletaskoutput/' + taskid)
@@ -84,13 +84,11 @@ def submitPlaybook():
     #return json.dumps(pbmessage)
 
 
-# @auth.login_required
-# @app.route('/status/<taskid>')
 # def get_status(taskid):
 #     # Proxy and reformat execution status based on task id
 #     refresh = 10
 #     title = "Playbook Results"
-#     status = requests.get(app.config['PBSTATUS_URL'] + taskid, auth=(app.config['PB_POST_USER'], app.config['PB_POST_PASSWD']))
+#     status = requests.get('http://10.9.26.174:3000/api/ansibletaskoutput/' + taskid, auth=('admin', 'admin'))
 #     formatted = re.sub(r"\s+TASK", "<br>TASK", status.text)
 
 #     # playbook execution finished
@@ -103,3 +101,5 @@ def submitPlaybook():
 app.add_url_rule('/', 'index', index)
 app.add_url_rule('/config', 'variables', variables, methods=['POST'])
 app.add_url_rule('/doit', 'submitPlaybook', submitPlaybook, methods=['POST'])
+#app.add_url_rule('/status/<taskid>', 'get_status', get_status, methods=['GET'] )
+

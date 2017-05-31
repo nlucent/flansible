@@ -1,5 +1,6 @@
 from flask_restful import Resource, Api
 from flask_restful_swagger import swagger
+from flask import render_template, make_response
 from flansible import app
 from flansible import api, app, celery, auth
 from ModelClasses import AnsibleCommandModel, AnsiblePlaybookModel, AnsibleRequestResultModel, AnsibleExtraArgsModel
@@ -31,10 +32,22 @@ class AnsibleTaskOutput(Resource):
         else:
             result = task.info['output']
         #result_out = task.info.replace('\n', "<br>")
-        #result = result.replace('\n', '<br>')
+        result = result.replace('\n', '<br>')
         #return result, 200, {'Content-Type': 'text/html; charset=utf-8'}
-        resp = app.make_response((result, 200))
-        resp.headers['content-type'] = 'text/plain'
-        return resp
+
+        title = "Playbook Results"
+        refresh = 5
+
+        if "RECAP" in result or "ERROR" in result:
+            # disable refresh in template
+            refresh = 1000
+
+        response = make_response(render_template('status.j2', title=title, status=result, refresh=refresh))
+        response.headers['Content-Type'] = 'text/html'
+        return response
+        # return render_template('status.j2',  {'Content-Type': 'text/html'}, title=title, status=task.info['output'], refresh=refresh)
+        # resp = app.make_response((result, 200))
+        # resp.headers['content-type'] = 'text/plain'
+        # return resp
 
 api.add_resource(AnsibleTaskOutput, '/api/ansibletaskoutput/<string:task_id>')
