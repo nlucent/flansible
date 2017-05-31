@@ -31,9 +31,7 @@ class AnsibleTaskOutput(Resource):
             result = task.info['output']
         else:
             result = task.info['output']
-        #result_out = task.info.replace('\n', "<br>")
-        result = result.replace('\n', '<br>')
-        #return result, 200, {'Content-Type': 'text/html; charset=utf-8'}
+        result = result.replace('\n', '<br>\n')
 
         title = "Playbook Results"
         refresh = 5
@@ -45,9 +43,5 @@ class AnsibleTaskOutput(Resource):
         response = make_response(render_template('status.j2', title=title, status=result, refresh=refresh))
         response.headers['Content-Type'] = 'text/html'
         return response
-        # return render_template('status.j2',  {'Content-Type': 'text/html'}, title=title, status=task.info['output'], refresh=refresh)
-        # resp = app.make_response((result, 200))
-        # resp.headers['content-type'] = 'text/plain'
-        # return resp
 
 api.add_resource(AnsibleTaskOutput, '/api/ansibletaskoutput/<string:task_id>')

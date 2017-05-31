@@ -21,7 +21,6 @@ from celery import Celery
 
 from ModelClasses import AnsibleCommandModel, AnsiblePlaybookModel, AnsibleRequestResultModel, AnsibleExtraArgsModel
 
-
 #Setup queue for celery
 io_q = Queue()
 

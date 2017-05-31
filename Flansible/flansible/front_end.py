@@ -77,25 +77,6 @@ def submitPlaybook():
             #return redirect('/status/' + cmdres['task_id'])
         
     return cmdres
-    #     status = requests.get('/api/ansibletaskoutput/' + taskid)
-
-    #    # return redirect('/status/' + taskid)
-    #dump message on failure
-    #return json.dumps(pbmessage)
-
-
-# def get_status(taskid):
-#     # Proxy and reformat execution status based on task id
-#     refresh = 10
-#     title = "Playbook Results"
-#     status = requests.get('http://10.9.26.174:3000/api/ansibletaskoutput/' + taskid, auth=('admin', 'admin'))
-#     formatted = re.sub(r"\s+TASK", "<br>TASK", status.text)
-
-#     # playbook execution finished
-#     if "RECAP" in formatted or "ERROR" in formatted:
-#         # disable refresh in template
-#         refresh = 1000
-#     return render_template('status.j2', title=title, status=formatted, refresh=refresh)
 
 
 app.add_url_rule('/', 'index', index)
