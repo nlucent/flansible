@@ -37,13 +37,14 @@ def do_long_running_task(self, cmd, type='Ansible'):
                     # Check for previous runtime in rdis
                     tname = p.group(1)
                     if rdis.get(tname):
+                        avg =  "{:0.2f}".format( float(rdis.get(tname)))
                         line = line.replace('\n', '')
-                        line = str.format("{0} (Avg {1} secs) \n", line, rdis.get(tname))
+                        line = str.format("{0} (Avg {1} secs) \n", line, avg)
 
             if re.match('^[ok|changed|fatal]', line):
-                ended = time.time() - float(started)
-                ended = "{:0.2f}".format(ended)
-                ttime = rdis.get(tname)
+                ended =  "{:0.2f}".format(time.time() - float(started))
+               # ended = "{:0.2f}".format(ended)
+                ttime = "{:0.2f}".format(float(rdis.get(tname)))
                 if not ttime:
                     ttime = ended
                     rdis.set(tname, ttime)
