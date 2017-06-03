@@ -26,8 +26,11 @@ def index():
             if name.endswith((".yaml", ".yml")):
                 yamlfiles.append(name)
     playbooks = sorted(yamlfiles)
+    if len(playbooks) == 0:
+        playbooks = ["No playbooks found."]
     title = 'Choose Playbook'
     return render_template('index.j2', title=title, varlist=playbooks)
+    #return render_template('index.html', title=title, playbooks=playbooks)
 
 @auth.login_required
 def variables():
