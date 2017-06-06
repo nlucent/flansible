@@ -23,8 +23,9 @@ def do_long_running_task(self, cmd, type='Ansible'):
         proc = Popen([cmd], stdout=PIPE, stderr=subprocess.STDOUT, shell=True)
 
         started = 0
-        ended= 0
+        totaltime = 0
 
+        # task name match
         tmatch = ''
         taskName = re.compile('TASK \[(\w+[\s+\w+]+)]')
 
@@ -36,34 +37,36 @@ def do_long_running_task(self, cmd, type='Ansible'):
                 if p:
                     # Check for previous runtime in rdis
                     tmatch = p.group(1)
+                    print(tmatch)
                     if rdis.exists(tmatch):
                         avg =  "{:0.2f}".format( float(rdis.get(tmatch)))
                         line = line.replace('\n', '')
                         line = str.format("{0} (Avg {1} secs) \n", line, avg)
 
             if re.match('^[ok|changed|fatal]', line):
-                ended =  "{:0.2f}".format(time.time() - float(started))
-               # ended = "{:0.2f}".format(ended)
-                if rdis.exists(tmatch):
-                    ttime = "{:0.2f}".format(float(rdis.get(tmatch)))
-                if not ttime:
-                    ttime = ended
+                totaltime  =  "{:0.2f}".format(time.time() - float(started))
+
+                if not rdis.exists(tmatch):
+                    rdis.set(tmatch, totaltime)
+
+                ttime = "{:0.2f}".format(float(rdis.get(tmatch)))
+                
                 # remove last new line
                 line = line.replace('\n', '')
 
                 diffsign = ''
                 diffval = 0
 
-                if ttime < ended:
+                if ttime < totaltime :
                     diffsign = "+"
-                    diffval = float(ttime) - float(ended)
+                    diffval = float(ttime) - float(totaltime )
 
-                elif ttime > ended:
+                elif ttime > totaltime :
                     diffsign = "-"
-                    diffval = float(ended) - float(ttime)
+                    diffval = float(totaltime ) - float(ttime)
                 
 
-                line = str.format("{0} : <strong>{1} seconds</strong>  (diff {2}{3} secs)\n", line, ended, diffsign, diffval)
+                line = str.format("{0} : <strong>{1} seconds</strong>  (diff {2}{3} secs)\n", line, totaltime , diffsign, diffval)
                # print(line)
             output = output + line
             #output.append(line)
