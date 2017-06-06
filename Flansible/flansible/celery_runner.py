@@ -23,7 +23,7 @@ def do_long_running_task(self, cmd, type='Ansible'):
         proc = Popen([cmd], stdout=PIPE, stderr=subprocess.STDOUT, shell=True)
 
         started = 0
-        totaltime = 0
+        totalTaskTime = 0
 
         # task name match
         tmatch = ''
@@ -38,35 +38,42 @@ def do_long_running_task(self, cmd, type='Ansible'):
                     # Check for previous runtime in rdis
                     tmatch = p.group(1)
                     print(tmatch)
+                    # found previous runtime
                     if rdis.exists(tmatch):
-                        avg =  "{:0.2f}".format( float(rdis.get(tmatch)))
+                        # number of times run
+                        countkey = tmatch + "_count"
+                        rdis.incr(countkey)
+
+                        avg =  "{:0.2f}".format( float(rdis.get(tmatch)) / float(rdis.get(countkey)))
                         line = line.replace('\n', '')
-                        line = str.format("{0} (Avg {1} secs) \n", line, avg)
+                        line = str.format("{0} (Avg {1} secs, {2} runs) \n", line, avg, rdis.get(countkey))
 
             if re.match('^[ok|changed|fatal]', line):
-                totaltime  =  "{:0.2f}".format(time.time() - float(started))
+                totalTaskTime  =  "{:0.2f}".format(time.time() - float(started))
 
                 if not rdis.exists(tmatch):
-                    rdis.set(tmatch, totaltime)
+                    rdis.set(tmatch, float(totalTaskTime))
 
+                # Update rdis task total time
                 ttime = "{:0.2f}".format(float(rdis.get(tmatch)))
-                
+                rdis.set(tmatch, float(ttime) + float(totalTaskTime) )
+
                 # remove last new line
                 line = line.replace('\n', '')
 
                 diffsign = ''
                 diffval = 0
 
-                if ttime < totaltime :
+                if ttime < totalTaskTime :
                     diffsign = "+"
-                    diffval = float(ttime) - float(totaltime )
+                    diffval = float(ttime) - float(totalTaskTime )
 
-                elif ttime > totaltime :
+                elif ttime > totalTaskTime :
                     diffsign = "-"
-                    diffval = float(totaltime ) - float(ttime)
+                    diffval = float(totalTaskTime ) - float(ttime)
                 
 
-                line = str.format("{0} : <strong>{1} seconds</strong>  (diff {2}{3} secs)\n", line, totaltime , diffsign, diffval)
+                line = str.format("{0} : <strong>{1} seconds</strong>  (diff {2}{3} secs)\n", line, totalTaskTime , diffsign, diffval)
                # print(line)
             output = output + line
             #output.append(line)
