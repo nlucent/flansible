@@ -125,6 +125,9 @@ def do_long_running_task(self, cmd, type='Ansible'):
                     diffsign = "-"
                     diffval =  float("{:0.2f}".format((avgtime - totalTaskTime)))
                 
+                else:
+                    diffsign = ''
+                    diffval = 0.0
 
                 line = str.format("{0} : <strong>{1} seconds</strong>  ({2}{3} secs)\n", line, totalTaskTime , diffsign, diffval)
                # print(line)
