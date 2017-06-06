@@ -25,7 +25,7 @@ def do_long_running_task(self, cmd, type='Ansible'):
         started = 0
         ended= 0
 
-        tname = ''
+        tmatch = ''
         taskName = re.compile('TASK \[(\w+[\s+\w+]+)]')
 
         for line in iter(proc.stdout.readline, ''):
@@ -35,19 +35,19 @@ def do_long_running_task(self, cmd, type='Ansible'):
                 p = taskName.match(line)
                 if p:
                     # Check for previous runtime in rdis
-                    tname = p.group(1)
-                    if rdis.get(tname):
-                        avg =  "{:0.2f}".format( float(rdis.get(tname)))
+                    tmatch = p.group(1)
+                    if rdis.exists(tmatch):
+                        avg =  "{:0.2f}".format( float(rdis.get(tmatch)))
                         line = line.replace('\n', '')
                         line = str.format("{0} (Avg {1} secs) \n", line, avg)
 
             if re.match('^[ok|changed|fatal]', line):
                 ended =  "{:0.2f}".format(time.time() - float(started))
                # ended = "{:0.2f}".format(ended)
-                ttime = "{:0.2f}".format(float(rdis.get(tname)))
+                if rdis.exists(tmatch):
+                    ttime = "{:0.2f}".format(float(rdis.get(tmatch)))
                 if not ttime:
                     ttime = ended
-                    rdis.set(tname, ttime)
                 # remove last new line
                 line = line.replace('\n', '')
 

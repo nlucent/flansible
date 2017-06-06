@@ -13,9 +13,11 @@ def FetchYamlVars(yamlfile):
     f = open(playbook_root + yamlfile)
     ymldata = yaml.safe_load(f)
     f.close()
-    pbVars = ymldata[0]['vars'].keys()
-    pbVars.insert(0,'host')
-    return pbVars
+    if 'vars' in ymldata[0]:
+        pbVars = ymldata[0]['vars'].keys()
+        pbVars.insert(0,'host')
+        return pbVars
+    return []
 
 @auth.login_required
 def index():
@@ -30,13 +32,11 @@ def index():
         playbooks = ["No playbooks found."]
     title = 'Choose Playbook'
     return render_template('index.j2', title=title, varlist=playbooks)
-    #return render_template('index.html', title=title, playbooks=playbooks)
 
 @auth.login_required
 def variables():
     curPB = request.form['pbradio']
     pbVars = FetchYamlVars(curPB)
-
     title = 'Enter required variable values'
     return render_template('variables.j2', title=title, curPB=curPB, varlist=pbVars)
 
