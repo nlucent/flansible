@@ -49,13 +49,13 @@ def do_long_running_task(self, cmd, type='Ansible'):
                         line = str.format("{0} (Avg {1} secs, {2} runs) \n", line, avg, rdis.get(countkey))
 
             if re.match('^[ok|changed|fatal]', line):
-                totalTaskTime  =  "{:0.2f}".format(time.time() - float(started))
+                totalTaskTime  =  float("{:0.2f}".format((time.time() - float(started))))
 
                 if not rdis.exists(tmatch):
                     rdis.set(tmatch, float(totalTaskTime))
 
                 # Update rdis task total time
-                ttime = "{:0.2f}".format(float(rdis.get(tmatch)))
+                ttime = float("{:0.2f}".format(float(rdis.get(tmatch))))
                 rdis.set(tmatch, float(ttime) + float(totalTaskTime) )
 
                 # remove last new line
@@ -64,16 +64,18 @@ def do_long_running_task(self, cmd, type='Ansible'):
                 diffsign = ''
                 diffval = 0
 
-                if ttime < totalTaskTime :
-                    diffsign = "+"
-                    diffval = float(ttime) - float(totalTaskTime )
+                avgtime = ttime / float(rdis.get(countkey))
 
-                elif ttime > totalTaskTime :
+                if avgtime < totalTaskTime :
+                    diffsign = "+"
+                    diffval =  float("{:0.2f}".format( (totalTaskTime - avgtime) ))
+
+                elif avgtime > totalTaskTime :
                     diffsign = "-"
-                    diffval = float(totalTaskTime ) - float(ttime)
+                    diffval =  float("{:0.2f}".format((avgtime - totalTaskTime)))
                 
 
-                line = str.format("{0} : <strong>{1} seconds</strong>  (diff {2}{3} secs)\n", line, totalTaskTime , diffsign, diffval)
+                line = str.format("{0} : <strong>{1} seconds</strong>  ({2}{3} secs)\n", line, totalTaskTime , diffsign, diffval)
                # print(line)
             output = output + line
             #output.append(line)
