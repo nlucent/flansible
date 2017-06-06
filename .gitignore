@@ -5,3 +5,6 @@
 .idea/
 .vagrant/
 *.retry
+*.sublime-workspace
+.gitignore
+*.sublime-project
