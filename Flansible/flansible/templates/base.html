@@ -9,15 +9,16 @@
     {% endblock %}
     <!-- Bootstrap -->
     <link href={{ url_for('static', filename="css/bootstrap.min.css") }} rel="stylesheet">
+    <link href={{ url_for('static', filename="css/center.css") }} rel="stylesheet">
   	<link rel="shortcut icon" href="https://t-systems.com/blob/76448/681edf6b1bf49485eb41d31992f71a54/ts-de-en-favicon.ico"/>
   </head>
   <body>
-
+  <div id="page-wrap">
   {% block content %}
   {% endblock %}
 
-
+</div>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-  <script src={{ url_for('static', filename="js/bootstrap.min.js") }} ></script>
+  <script src={{ url_for('static', filename="js/bootstrap.min.js") }}></script>
   </body>
 </html>

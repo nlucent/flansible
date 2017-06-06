@@ -22,17 +22,19 @@ def do_long_running_task(self, cmd, type='Ansible'):
         print(str.format("About to execute: {0}", cmd))
         proc = Popen([cmd], stdout=PIPE, stderr=subprocess.STDOUT, shell=True)
 
-        started = 0
+        playstarted = 0
+        taskstarted = 0
         totalTaskTime = 0
 
         # task name match
         tmatch = ''
         taskName = re.compile('TASK \[(\w+[\s+\w+]+)]')
+        playName = re.compile('PLAY \[(\w+[\s+\w+]+)]')
 
         for line in iter(proc.stdout.readline, ''):
             #print(str(line))
             if re.match('^TASK', line):
-                started = "{:0.2f}".format( time.time())
+                taskstarted = "{:0.2f}".format( time.time())
                 p = taskName.match(line)
                 if p:
                     # Check for previous runtime in rdis
@@ -49,7 +51,7 @@ def do_long_running_task(self, cmd, type='Ansible'):
                         line = str.format("{0} (Avg {1} secs, {2} runs) \n", line, avg, rdis.get(countkey))
 
             if re.match('^[ok|changed|fatal]', line):
-                totalTaskTime  =  float("{:0.2f}".format((time.time() - float(started))))
+                totalTaskTime  =  float("{:0.2f}".format((time.time() - float(taskstarted))))
 
                 if not rdis.exists(tmatch):
                     rdis.set(tmatch, float(totalTaskTime))
