@@ -25,14 +25,63 @@ def do_long_running_task(self, cmd, type='Ansible'):
         playstarted = 0
         taskstarted = 0
         totalTaskTime = 0
+        totalPlayTime = 0
 
         # task name match
         tmatch = ''
+        # playbook name match
+        pmatch = ''
         taskName = re.compile('TASK \[(\w+[\s+\w+]+)]')
         playName = re.compile('PLAY \[(\w+[\s+\w+]+)]')
 
         for line in iter(proc.stdout.readline, ''):
-            #print(str(line))
+
+            if re.match('^PLAY', line):
+                p = playName.match(line)
+                if p:
+                    playstarted = float("{:0.2f}".format( time.time()))
+                    # Check for previous runtime in rdis
+                    pmatch = p.group(1)
+                    print(pmatch)
+                    # found previous runtime
+                    if rdis.exists(pmatch):
+                        # number of times run
+                        countkey = pmatch + "_count"
+                        rdis.incr(countkey)
+
+                        avg =  "{:0.2f}".format( float(rdis.get(pmatch)) / float(rdis.get(countkey)))
+                        line = line.replace('\n', '')
+                        line = str.format("{0} (Avg {1} secs, {2} runs) \n", line, avg, rdis.get(countkey))
+
+                else:
+                    countkey = pmatch + "_count"
+                    # Play recap
+                    playended = float("{:0.2f}".format( time.time()))
+                    totalPlayTime = float("{:0.2f}".format((playended - playstarted)))
+
+                    if not rdis.exists(pmatch):
+                        rdis.set(pmatch, float(totalPlayTime))
+
+                    # Update rdis task total time
+                    ptime = float("{:0.2f}".format(float(rdis.get(pmatch))))
+                    rdis.set(pmatch, float(ptime) + float(totalPlayTime) )
+
+                    # remove last new line
+                    line = line.replace('\n', '')
+                    diffsign = ''
+                    diffval = 0
+
+                    avgtime = ptime / float(rdis.get(countkey))
+
+                    if avgtime < totalPlayTime :
+                        diffsign = "+"
+                        diffval =  float("{:0.2f}".format( (totalPlayTime - avgtime) ))
+
+                    elif avgtime > totalPlayTime :
+                        diffsign = "-"
+                        diffval =  float("{:0.2f}".format((avgtime - totalPlayTime)))
+                    line = str.format("{0} : <strong>{1} seconds</strong>  ({2}{3} secs)\n", line, totalPlayTime , diffsign, diffval)
+                    
             if re.match('^TASK', line):
                 taskstarted = "{:0.2f}".format( time.time())
                 p = taskName.match(line)
@@ -79,8 +128,8 @@ def do_long_running_task(self, cmd, type='Ansible'):
 
                 line = str.format("{0} : <strong>{1} seconds</strong>  ({2}{3} secs)\n", line, totalTaskTime , diffsign, diffval)
                # print(line)
+
             output = output + line
-            #output.append(line)
             self.update_state(state='PROGRESS', meta={'output': output, 'description': "", 'returncode': None})
 
         return_code = proc.poll()
