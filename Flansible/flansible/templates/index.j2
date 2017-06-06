@@ -6,11 +6,14 @@
 <h4>Select playbook</h4>
 <p>
 <form action='/config' class="form-group" method='post' name='playbook'>
+<select name=pbselect>
   {% for item in varlist %}
-    <div class="radio">
-        <label><input type="radio" name="pbradio" value="{{item}}">{{item}}</input></label>
-        </div>
+    <!-- <div class="select">
+        <label><input type="select" name="pbradio" value="{{item}}">{{item}}</input></label>
+        </div> -->
+    <option value="{{item}}">{{item}}</option>
     {% endfor %}
+</select>
     <input class="btn btn-default" type="submit" value="Next">
 </form>
 

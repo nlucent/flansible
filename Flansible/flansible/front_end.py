@@ -35,7 +35,7 @@ def index():
 
 @auth.login_required
 def variables():
-    curPB = request.form['pbradio']
+    curPB = request.form['pbselect']
     pbVars = FetchYamlVars(curPB)
     title = 'Enter required variable values'
     return render_template('variables.j2', title=title, curPB=curPB, varlist=pbVars)
