@@ -2,9 +2,9 @@
   -webkit-box-sizing: content-box;
   -moz-box-sizing: content-box;
   box-sizing: content-box;
-  width: 160px;
+  width: 400px;
   position: relative;
-  top: 20%;
+  top: 40%;
   left: 40%;
   padding: 21px;
   overflow: hidden;
@@ -18,4 +18,11 @@
   -webkit-box-shadow: 1px 1px 1px 0 rgba(0,0,0,0.3) ;
   box-shadow: 1px 1px 1px 0 rgba(0,0,0,0.3) ;
   text-shadow: 1px 1px 1px rgba(0,0,0,0.2) ;
+}
+
+.varName {
+    width: 150px;
+}
+.form-control {
+    width: 200px;
 }

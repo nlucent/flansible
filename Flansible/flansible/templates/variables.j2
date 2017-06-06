@@ -9,7 +9,7 @@
     <form action='/doit' class="form-inline" method="POST" name='PlaybookVars'>
     	<h4>Required Playbook Variables</h4>
 	    {% for item in varlist %}
-	    	{{item}} <input type="text" class="form-control" placeholder="{{item}}" name="{{item}}" value="{{request.form[item]}}"><br>
+	    	<div class="varName">{{item}}</div><input type="text" class="form-control" placeholder="{{item}}" name="{{item}}" value="{{request.form[item]}}"><br>
 	    {% endfor %}
 
 	    <h4>Optional Runtime Variables</h4>
